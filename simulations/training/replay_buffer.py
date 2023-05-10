@@ -6,7 +6,7 @@ import torch
 
 class ReplayBuffer:
     """Replay Buffer stores the last N transitions"""
-    def __init__(self, max_size=10000, history=4, batch_size=32):
+    def __init__(self, max_size=5000, history=4, batch_size=32):
         """
         args:
           max_size: the maximal number of stored transitions
