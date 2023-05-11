@@ -3,6 +3,8 @@ import cv2
 import matplotlib.pyplot as plt
 import torch
 
+from collections import deque
+
 def frameProcessor(frame, target_height=84, target_width=84, is_plot=False):
     """
     process a single frame
@@ -22,3 +24,27 @@ def frameProcessor(frame, target_height=84, target_width=84, is_plot=False):
     frame = torch.from_numpy(frame)
     frame.unsqueeze_(0) #shape:[n_channels, width, height]
     return frame
+
+
+class StateCreator:
+    def __init__(self, frame_width, frame_height, history=4):
+        """
+        create state from the last 4 frames
+        """
+        self.frames = deque([], maxlen=history)
+        frame = torch.zeros(frame_width, frame_height)
+        self.frames.extend([frame]*history)
+
+    def add_frame(self, frame):
+        """
+        args:
+          frame: a torch tensor, shape:[1,84,84]
+        """
+        self.frames.append(frame)
+
+    def create_state(self):
+        state = torch.stack(list(self.frames), dim=0)
+        return state 
+
+    
+    
