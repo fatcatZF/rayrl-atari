@@ -37,12 +37,16 @@ class StateCreator:
 
     def add_frame(self, frame):
         """
+        add the last frame to the queue
         args:
           frame: a torch tensor, shape:[1,84,84]
         """
         self.frames.append(frame)
 
     def create_state(self):
+        """
+        create state based on the current frame queue
+        """
         state = torch.stack(list(self.frames), dim=0)
         return state 
 
