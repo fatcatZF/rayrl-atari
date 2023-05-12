@@ -22,7 +22,7 @@ def frameProcessor(frame, target_height=84, target_width=84, is_plot=False):
     if is_plot:
         plt.imshow(frame)
     frame = torch.from_numpy(frame)
-    frame.unsqueeze_(0) #shape:[n_channels, width, height]
+    frame.unsqueeze_(0) #shape:[n_channels=1, width, height]
     return frame
 
 
@@ -32,7 +32,7 @@ class StateCreator:
         create state from the last 4 frames
         """
         self.frames = deque([], maxlen=history)
-        frame = torch.zeros(frame_width, frame_height)
+        frame = torch.zeros(1, frame_width, frame_height)
         self.frames.extend([frame]*history)
 
     def add_frame(self, frame):
@@ -47,7 +47,7 @@ class StateCreator:
         """
         create state based on the current frame queue
         """
-        state = torch.stack(list(self.frames), dim=0)
+        state = torch.cat(list(self.frames), dim=0)
         return state 
 
     
