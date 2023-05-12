@@ -88,6 +88,8 @@ class Player:
                                 reward, episode_done))
             
 
+        self.env.close()
+   
         return experiences, game_reward
             
 
