@@ -1,5 +1,5 @@
 
-from utils import frameProcessor, StateCreator
+from simulations.utils import frameProcessor, StateCreator
 
 import torch 
 import torch.nn as nn 
@@ -46,12 +46,15 @@ class Player:
         frame, _, terminated, truncated, info = self.env.step(1) # Fire
         lives = info["lives"]
         while not (terminated or truncated): 
+            
+            frame_processed = frameProcessor(frame, self.frame_height, self.frame_width)
+
             if policy == "random":
                action = self.env.action_space.sample()
 
             elif isinstance(policy, nn.Module):
                 policy.eval()
-                frame_processed = frameProcessor(frame, self.frame_height, self.frame_width)
+                
                 self.state_creator.add_frame(frame_processed)
                 state = self.state_creator.create_state()
                 #state shape: [n_channels=1, frame_width, frame_height]
@@ -59,7 +62,7 @@ class Player:
                     action = self.env.action_space.sample()
                 else:
                     with torch.no_grad():
-                        Q = policy(state.unsqueeze(0)) #Compute the Q-Value
+                        Q = policy(state.unsqueeze(0)) #add batch dimension to the state and Compute the Q-Value
                         action = torch.argmax(Q.squeeze()).item()
             else:
                 print("Invalid Policy")
