@@ -48,6 +48,7 @@ class StateCreator:
         create state based on the current frame queue
         """
         state = torch.cat(list(self.frames), dim=0)
+        state = (state.float()/255.) #normalize the value into [0,1]
         return state 
 
     
