@@ -37,6 +37,19 @@ class ReplayBuffer:
         self.rewards.append(reward)
         self.is_dones.append(is_done)
 
+    def add_batch_experiences(self, experiences):
+        """
+        args:
+          experiences: 
+             list of tuples, (frame, action, next_frame, 
+             reward, is_dones)
+        """ 
+        frames, actions, next_frames, rewards, is_dones = list(zip(*experiences))
+        self.frames.extend(list(frames))
+        self.actions.extend(list(actions))
+        self.next_frames.extend(list(next_frames))
+        self.rewards.extend(list(rewards))
+        self.is_dones.extend(list(is_dones))
     
     def current_state_available(self):
         """
