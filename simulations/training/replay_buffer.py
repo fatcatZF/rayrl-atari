@@ -90,9 +90,11 @@ class ReplayBuffer:
             state = list(self.frames)[idx - self.history + 1:idx + 1]
             state = torch.cat(state, dim=0)
             # shape:[n_timesteps, width, height]
+            state = state.float()/255. # Normalization of state
             next_state = list(self.next_frames)[idx - self.history + 1:idx + 1]
             next_state = torch.cat(next_state, dim=0)
             # shape:[n_timesteps, width, height]
+            next_state = next_state.float()/255. # Normalization of next state
             action = self.actions[idx]
             reward = self.rewards[idx]
             is_done = self.is_dones[idx]
