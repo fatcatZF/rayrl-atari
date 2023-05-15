@@ -19,6 +19,8 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--gamma", type=float, default=0.99,
                    help="discount factor.")
+parser.add_argument("--env-name", type=str, default="ALE/Breakout-v5",
+                    help="Name of Environment.")
 parser.add_argument("--num-actions", type=int, default=4,
                     help="Number of actions.")
 parser.add_argument("--replay-size", type=int, default=8000,
@@ -55,35 +57,24 @@ if args.save_folder:
     log = open(log_file, 'w')
 
 
+def train_policy():
 
-policy = DQN(num_actions=args.num_actions) #initialize a policy
-target = DQN(num_actions=args.num_actions) #initialize a target
-target.load_state_dict(policy.state_dict()) 
+    policy = DQN(num_actions=args.num_actions) #initialize a policy
+    target = DQN(num_actions=args.num_actions) #initialize a target
+    target.load_state_dict(policy.state_dict()) 
 
-
-
-class Trainer:
-    def __init__(self, env_name="ALE/Breakout-v5", frame_width=84, frame_height=84,
-                 history=4, replay_buffer_size=8000, replay_batch_size=32):
-        
-        self.player = Player(env_name, frame_width, frame_height, history)
-        self.replay_buffer = ReplayBuffer(max_size=replay_buffer_size,
-                                          history=history,
-                                          batch_size=replay_batch_size)
-        
-    def __simulate(self, policy, explore, epsilon):
-        experiences, game_reward = self.player.rollout(policy, explore, epsilon, 
-                                                       render=False)
-        self.replay_buffer.add_batch_experiences(experiences)
-
-        return game_reward
+    player = Player(env_name=args.env_name, frame_width=84, 
+                    frame_height=84, history=4)
     
-    def __update_policy(self, policy):
-        pass 
+    num_episodes = args.max_episode
+    eps = args.eps_max 
+    eps_delta = (args.eps_max-args.eps_min)/args.eps_steps
+
+    
 
 
-    def train_policy(self, policy):
-        pass 
+
+
         
 
 
