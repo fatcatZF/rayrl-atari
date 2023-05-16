@@ -107,46 +107,46 @@ def train_policy():
                                 frame_height=84,
                                 history=4) for _ in range(num_sims)]
     
-    
+    for _ in range(num_episodes):
 
 
-    experiences = [player.rollout.remote(policy_ref, explore=True, episilon=eps) for player in players]
+        experiences = [player.rollout.remote(policy_ref, explore=True, episilon=eps) for player in players]
 
-    while len(experiences) > 0:
-        finished, experiences = ray.wait(experiences)
-        replay_buffer.add_batch_experiences(ray.get(finished)[0][0]) # add finished experiences to the replay buffer
-        minibatch = replay_buffer.get_minibatch() # Sample a minibatch from replay buffer
-        # list of tuples of form (state, action ,next_state, reward, is_done)
-        batch_trans = list(map(list, zip(*minibatch)))
-        states = torch.stack(batch_trans[0], dim=0).to(device)
-        actions = batch_trans[1]
-        batch_size = len(actions)
-        batch_indices = range(batch_size)
-        next_states = torch.stack(batch_trans[2], dim=0).to(device)
-        rewards = torch.tensor(batch_trans[3]).to(device)
-        is_dones = torch.tensor(batch_trans[4]).to(device)
+        while len(experiences) > 0:
+            finished, experiences = ray.wait(experiences)
+            replay_buffer.add_batch_experiences(ray.get(finished)[0][0]) # add finished experiences to the replay buffer
+            minibatch = replay_buffer.get_minibatch() # Sample a minibatch from replay buffer
+            # list of tuples of form (state, action ,next_state, reward, is_done)
+            batch_trans = list(map(list, zip(*minibatch)))
+            states = torch.stack(batch_trans[0], dim=0).to(device)
+            actions = batch_trans[1]
+            batch_size = len(actions)
+            batch_indices = range(batch_size)
+            next_states = torch.stack(batch_trans[2], dim=0).to(device)
+            rewards = torch.tensor(batch_trans[3]).to(device)
+            is_dones = torch.tensor(batch_trans[4]).to(device)
 
-        # Predicted Q Values
-        policy.train()
-        Q_predicted = policy(states)
-        # Get predicted Q(s,a)
-        Q_predicted = Q_predicted[batch_indices, actions]
+            # Predicted Q Values
+            policy.train()
+            Q_predicted = policy(states)
+            # Get predicted Q(s,a)
+            Q_predicted = Q_predicted[batch_indices, actions]
 
-        # Get Target Q Values
-        with torch.no_grad():
-            target.eval()
-            Q_next = target(next_states)
-            Q_next_max = torch.max(Q_next, -1).values
-            Q_next_max[is_dones] = 0.
-            Q_target = gamma*Q_next_max+rewards
+            # Get Target Q Values
+            with torch.no_grad():
+                target.eval()
+                Q_next = target(next_states)
+                Q_next_max = torch.max(Q_next, -1).values
+                Q_next_max[is_dones] = 0.
+                Q_target = gamma*Q_next_max+rewards
 
-        # Train Policy
-        loss = loss_criterion(Q_predicted, Q_target)
-        optimizer.zero_grad()
-        loss.backward()
-        for param in policy.parameters():
-            param.grad.data.clamp_(-1,1)
-        optimizer.step()
+            # Train Policy
+            loss = loss_criterion(Q_predicted, Q_target)
+            optimizer.zero_grad()
+            loss.backward()
+            for param in policy.parameters():
+                param.grad.data.clamp_(-1,1)
+            optimizer.step()
         
         
 
