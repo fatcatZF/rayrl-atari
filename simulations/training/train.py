@@ -31,11 +31,11 @@ parser.add_argument("--num-actions", type=int, default=4,
                     help="Number of actions.")
 parser.add_argument("--num-sims",type=int, default=4,
                     help="Number of simulations.")
-parser.add_argument("--replay-size", type=int, default=8000,
+parser.add_argument("--replay-size", type=int, default=105000,
                    help="maximal replay buffer size.")
 parser.add_argument("--batch-size", type=int, default=64,
                    help="batch size of replay.")
-parser.add_argument("--lr", type=float, default=0.0005,
+parser.add_argument("--lr", type=float, default=0.00025,
                    help="learning rate.")
 parser.add_argument("--save-folder", type=str, default="simulations/trained_models",
                    help="Where to save the trained model.")
@@ -135,6 +135,7 @@ def train_policy():
             batch_indices = range(batch_size)
             next_states = torch.stack(batch_trans[2], dim=0).to(device)
             rewards = torch.tensor(batch_trans[3]).to(device)
+            rewards_normalized = rewards.float()/500.
             is_dones = torch.tensor(batch_trans[4]).to(device)
 
             # Predicted Q Values
@@ -149,7 +150,7 @@ def train_policy():
                 Q_next = target(next_states)
                 Q_next_max = torch.max(Q_next, -1).values
                 Q_next_max[is_dones] = 0.
-                Q_target = gamma*Q_next_max+rewards
+                Q_target = gamma*Q_next_max+rewards_normalized
 
             # Train Policy
             loss = loss_criterion(Q_predicted, Q_target)
