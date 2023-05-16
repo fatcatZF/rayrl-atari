@@ -7,10 +7,14 @@ import torch
 import torch.nn as nn
 import torch.optim as optim 
 
+import numpy as np 
+
 import argparse
 import os 
 import time 
 import datetime
+
+from collections import deque
 
 import json 
 
@@ -33,7 +37,7 @@ parser.add_argument("--batch-size", type=int, default=64,
                    help="batch size of replay.")
 parser.add_argument("--lr", type=float, default=0.0005,
                    help="learning rate.")
-parser.add_argument("--save-folder", type=str, default="trained_models",
+parser.add_argument("--save-folder", type=str, default="simulations/trained_models",
                    help="Where to save the trained model.")
 parser.add_argument("--max-episode", type=int, default=30000,
                    help="Maximal trained episodes.")
@@ -107,11 +111,18 @@ def train_policy():
                                 frame_height=84,
                                 history=4) for _ in range(num_sims)]
     
-    for _ in range(num_episodes):
+    # Player for Evaluation
+    player_eval = Player(env_name=args.env_name, 
+                         frame_width=84,
+                         frame_height=84,
+                         history=4)
+    
+    rewards_last_100_episodes = deque([], maxlen=100)
+    
+    for episode in range(num_episodes):
 
-
+        # Simulation And Training Phase
         experiences = [player.rollout.remote(policy_ref, explore=True, episilon=eps) for player in players]
-
         while len(experiences) > 0:
             finished, experiences = ray.wait(experiences)
             replay_buffer.add_batch_experiences(ray.get(finished)[0][0]) # add finished experiences to the replay buffer
@@ -147,6 +158,36 @@ def train_policy():
             for param in policy.parameters():
                 param.grad.data.clamp_(-1,1)
             optimizer.step()
+
+
+        # Evaluation Phase
+        _, game_reward = player_eval.rollout(policy, explore=False)
+        rewards_last_100_episodes.append(game_reward)
+        average_reward = np.average(rewards_last_100_episodes)
+
+        print(f"Evaluation of Episode {episode+1}, game_reward: {game_reward}, average reward: {average_reward}")
+
+
+
+        # Change the value of eps for exploration
+        eps = max(eps-eps_delta, eps_min)
+
+
+        # Update the target
+        if (episode+1)%100 == 0:
+            target.load_state_dict(policy.state_dict())
+
+
+
+
+
+train_policy()
+
+
+
+
+        
+        
         
         
 
